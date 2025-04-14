@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Baraja de Cartas</title>
   <style>
     body {
@@ -10,6 +10,7 @@
       background: #f4f4f4;
       margin: 0;
       padding: 20px;
+      overflow-x: hidden;
     }
     h1 { text-align: center; }
     .buttons {
@@ -79,16 +80,20 @@
 <body>
   <h1>Baraja de Cartas</h1>
   <div class="buttons">
-    <button onclick="repartirCartas()">Repartir Cartas</button>
+    <button onclick="repartirCartas()">Repartir</button>
     <button onclick="verJugador(1)">Ver Jugador 1</button>
     <button onclick="verJugador(2)">Ver Jugador 2</button>
+    <button onclick="resetearPartida()" style="background: darkred;">Resetear partida</button>
   </div>
+
   <div class="players">
     <div class="player" id="jugador1">
       <h2>Jugador 1</h2>
+      <div class="cartas"></div>
     </div>
     <div class="player" id="jugador2">
       <h2>Jugador 2</h2>
+      <div class="cartas"></div>
     </div>
   </div>
 
@@ -107,8 +112,8 @@
 
       cartas = rows.map(row => {
         const [nombreRaw, imagenRaw] = row.split(',');
-        const nombre = nombreRaw?.replace(/(^"|"$)/g, '').trim();
-        let imagen = imagenRaw?.replace(/(^"|"$)/g, '').trim();
+        const nombre = nombreRaw?.replace(/(^\"|\"$)/g, '').trim();
+        let imagen = imagenRaw?.replace(/(^\"|\"$)/g, '').trim();
 
         const match = imagen?.match(/[-\w]{25,}/);
         if (match) {
@@ -123,17 +128,14 @@
       if (guardado1 && guardado2) {
         mazo1 = JSON.parse(guardado1);
         mazo2 = JSON.parse(guardado2);
-        if (mazo1.length > 0 || mazo2.length > 0) {
-          jugadorVisible = 1;
-          verJugador(jugadorVisible);
-        }
       }
     }
 
     function mostrarCartas(jugadorId, cartas, mostrar) {
       const contenedor = document.getElementById(jugadorId);
       contenedor.classList.add('visible');
-      contenedor.innerHTML = `<h2>${jugadorId === 'jugador1' ? 'Jugador 1' : 'Jugador 2'}</h2>`;
+      const divCartas = contenedor.querySelector('.cartas');
+      divCartas.innerHTML = '';
       cartas.forEach((carta, index) => {
         const div = document.createElement('div');
         div.className = 'card';
@@ -142,7 +144,7 @@
           <img src="${imgSrc}" alt="${carta.nombre}" onerror="this.src='${dorso}'">
           ${mostrar ? `<button onclick="descartarCarta('${jugadorId}', ${index})">Descartar</button>` : ''}
         `;
-        contenedor.appendChild(div);
+        divCartas.appendChild(div);
       });
     }
 
@@ -174,14 +176,32 @@
       if (jugadorId === 'jugador1') {
         mazo1.splice(index, 1);
         localStorage.setItem('mazo1', JSON.stringify(mazo1));
+        mostrarCartas('jugador1', mazo1, true);
       } else {
         mazo2.splice(index, 1);
         localStorage.setItem('mazo2', JSON.stringify(mazo2));
+        mostrarCartas('jugador2', mazo2, true);
       }
-      verJugador(jugadorVisible);
     }
 
-    cargarCartas();
+    function resetearPartida() {
+      const confirmar = confirm("¿Estás seguro de que quieres reiniciar la partida? Se perderán todas las cartas repartidas.");
+      if (!confirmar) return;
+
+      localStorage.removeItem("mazo1");
+      localStorage.removeItem("mazo2");
+      mazo1 = [];
+      mazo2 = [];
+      document.getElementById("jugador1").classList.remove("visible");
+      document.getElementById("jugador2").classList.remove("visible");
+      alert("Partida reiniciada. Pulsa Repartir para comenzar de nuevo.");
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      await cargarCartas();
+    });
   </script>
 </body>
 </html>
+
+
